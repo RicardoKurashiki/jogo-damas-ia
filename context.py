@@ -1,24 +1,25 @@
 import math
+from piece import Piece
 
 class Context:
-    def __init__(self, current, next, piece):
-        self.current = current
-        self.next = next
+    def __init__(self, currentPos, nextPos, piece):
+        self.currentPos = currentPos
+        self.nextPos = nextPos
         self.piece = piece
     
     def getDistance(self):
-        x = self.next[1] - self.current[1]
-        y = self.next[0] - self.next[0]
+        x = self.nextPos[1] - self.currentPos[1]
+        y = self.nextPos[0] - self.nextPos[0]
         return math.sqrt((x**2)+(y**2))
 
     def getDirection(self):
-        if (self.next[0] > self.current[0]):
-            if (self.next[1] > self.current[1]):
+        if (self.nextPos[0] > self.currentPos[0]):
+            if (self.nextPos[1] > self.currentPos[1]):
                 return "SE"
             else:
                 return "SW"
         else:
-            if (self.next[1] > self.current[1]):
+            if (self.nextPos[1] > self.currentPos[1]):
                 return "NE"
             else:
                 return "NW"

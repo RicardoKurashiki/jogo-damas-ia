@@ -1,5 +1,6 @@
 from table import Table
 from context import Context
+from piece import Piece
 from definitions import Definitions
 
 definitions = Definitions()
@@ -53,13 +54,21 @@ def playerMove(table, playerPiece):
     nextPos = getNextPosition()
     return Context(currentPos, nextPos, playerPiece)
 
-playerPiece = choosePiece()
+# playerPiece = choosePiece()
 
 t = Table()
 t.start()
 
-game = True
+c1 = Context([6,0],[0,6],Piece([1,1]))
+c2 = Context([0,6],[3,9],Piece([1,1]))
+c3 = Context([3,9],[9,3],Piece([1,1]))
 
-while game:
-    context = playerMove(t.table, playerPiece)
-    t.move(context)
+t.move(c1)
+t.move(c2)
+t.move(c3)
+
+# game = True
+
+# while game:
+#     context = playerMove(t.table, playerPiece)
+#     t.move(context)
