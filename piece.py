@@ -1,3 +1,12 @@
+"""
+Essa classe vai ser a responsável por ter os dados do ponto que está sendo analisado no tabuleiro
+Piece([2,1]) -> Team = Team.WHITE | Type = Type.PEDRA
+
+getString() -> Vai retornar o valor simbólico da peça analisada :: "w"
+getValue() -> Vai retornar o valor real da peça analisada :: [2, 1]
+"""
+
+
 from definitions import *
 
 class Piece:

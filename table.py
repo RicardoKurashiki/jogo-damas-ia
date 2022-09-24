@@ -1,3 +1,23 @@
+"""
+Essa classe vai ser responsável por administrar toda a informação do tabuleiro.
+Ou seja, criação das peças, movimentação etc.
+
+!!! -> Não vai ser feita validações para ver se o movimento é válido, mas sim só realizar este
+       e atualizar a visualização, assim como os pontos
+
+Exemplo de tabuleiro:
+[2, 1][0, 0][2, 1][0, 0][2, 1][0, 0][2, 1][0, 0][2, 1][0, 0]
+[0, 0][2, 1][0, 0][2, 1][0, 0][2, 1][0, 0][2, 1][0, 0][2, 1]
+[2, 1][0, 0][2, 1][0, 0][2, 1][0, 0][2, 1][0, 0][2, 1][0, 0]
+[0, 0][2, 1][0, 0][2, 1][0, 0][2, 1][0, 0][2, 1][0, 0][2, 1]
+[0, 0][0, 0][0, 0][0, 0][0, 0][0, 0][0, 0][0, 0][0, 0][0, 0]
+[0, 0][0, 0][0, 0][0, 0][0, 0][0, 0][0, 0][0, 0][0, 0][0, 0]
+[1, 1][0, 0][1, 1][0, 0][1, 1][0, 0][1, 1][0, 0][1, 1][0, 0]
+[0, 0][1, 1][0, 0][1, 1][0, 0][1, 1][0, 0][1, 1][0, 0][1, 1]
+[1, 1][0, 0][1, 1][0, 0][1, 1][0, 0][1, 1][0, 0][1, 1][0, 0]
+[0, 0][1, 1][0, 0][1, 1][0, 0][1, 1][0, 0][1, 1][0, 0][1, 1]
+"""
+
 from definitions import *
 from piece import Piece
 
@@ -21,8 +41,10 @@ class Table:
                 self.table.append(spaces)
                 cont -= 1
         
-        generatePieces([2,1], 4)
-        generatePieces([0,0], 2)
+        generatePieces([2,1], 3)
+        generatePieces([0,0], 1)
+        generatePieces([2,1], 1)
+        generatePieces([0,0], 1)
         generatePieces([1,1], 4)
 
     def showTable(self):
