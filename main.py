@@ -47,7 +47,6 @@ while game:
         table.move(context, True)
         turn = enemy
     else:
-        print("Pensando...")
         context = controller.think(table)
         table.move(context, True)
         turn = player.team

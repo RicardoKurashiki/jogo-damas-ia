@@ -21,11 +21,15 @@ class AlphaBeta:
         self.team = team
 
     def think(self, tableClass):
-        move = self.minimax(tableClass, 5, self.team).context
+        print("Pensando...")
+
+        move = self.minimax(tableClass, -inf, inf, 6, self.team).context
         
+        print(f"Máquina joga: {move.currentPos[0]},{move.currentPos[0]} >> {move.nextPos[0]},{move.nextPos[0]}")
+
         return move
 
-    def minimax(self, tableClass, depth, team):
+    def minimax(self, tableClass, alpha, beta, depth, team):
         currentEvaluation = EvaluatedMove()
         currentEvaluation.evaluation = getEvaluation(tableClass.table, self.team)
         enemyTeam = Team.WHITE if team == Team.BLACK else Team.BLACK
@@ -47,10 +51,16 @@ class AlphaBeta:
 
                 moveEval = EvaluatedMove()
                 moveEval.context = move
-                moveEval.evaluation = self.minimax(myTable, depth-1, enemyTeam).evaluation
+                moveEval.evaluation = self.minimax(myTable, alpha, beta, depth-1, enemyTeam).evaluation
                 
                 if (moveMaxEval.evaluation < moveEval.evaluation):
                     moveMaxEval = moveEval
+
+                if (alpha < moveEval.evaluation):
+                    alpha = moveEval.evaluation
+                
+                if (beta <= alpha):
+                    break;
 
             return moveMaxEval
         else:
@@ -67,10 +77,16 @@ class AlphaBeta:
 
                 moveEval = EvaluatedMove()
                 moveEval.context = move
-                moveEval.evaluation = self.minimax(myTable, depth-1, enemyTeam).evaluation
+                moveEval.evaluation = self.minimax(myTable, alpha, beta, depth-1, enemyTeam).evaluation
 
                 if (moveMinEval.evaluation > moveEval.evaluation):
                     moveMinEval = moveEval
+                
+                if (beta > moveEval.evaluation):
+                    beta = moveEval.evaluation
+                
+                if (beta <= alpha):
+                    break;
             
             return moveMinEval
 
@@ -140,43 +156,51 @@ def getStoneAvailableMoves(i, j, table):
     possibleEnemyMoves = list() # Lista de movimentos possíveis para caso tenha um inimigo.
     upDown = 0
     lastHouse = 0
+    canReverseEat = False
     enemy = 0
     
     if (piece.team == Team.WHITE):
         upDown = 1
         lastHouse = 9
+        canReverseEat = i > 1
         enemy = Team.BLACK
     else:
         upDown = -1
         lastHouse = 0
+        canReverseEat = i < 8
         enemy = Team.WHITE
 
     # -------------- Verificacao de Possivel Jogada --------------
     # Se for branca, e ja estiver na posicao 9, nao tem como "descer" mais.
     # Se for preta, e ja estiver na posicao 0, nao tem como "subir" mais.
-    if (i != lastHouse):
+    
+    if (canReverseEat == True) and (j > 1) and (Piece(table[i-upDown][j-1]).team == enemy) and (Piece(table[i - 2*upDown][j - 2]).team == Team.BLANK):
+        revMove = [i - 2*upDown, j - 2]
+        possibleEnemyMoves.append(revMove)
 
-        # Se j > 0, verifica jogada para a esquerda.
-        if (j > 0) and (Piece(table[i+upDown][j-1]).team != piece.team):
-            leftMove = [i + upDown, j - 1]
-            leftMovePiece = Piece(table[leftMove[0]][leftMove[1]]) 
+    if (canReverseEat == True) and (j < 8) and (Piece(table[i-upDown][j+1]).team == enemy) and (Piece(table[i - 2*upDown][j + 2]).team == Team.BLANK):
+        revMove = [i - 2*upDown, j + 2]
+        possibleEnemyMoves.append(revMove)
 
-            if (leftMovePiece.team == enemy) and (leftMove[0] != lastHouse) and (leftMove[1] != 0) and (Piece(table[i + 2*upDown][j - 2]).team == Team.BLANK):
-                leftMove = [i + 2*upDown, j - 2]
-                possibleEnemyMoves.append(leftMove)
-            elif leftMovePiece.team == Team.BLANK:
-                possibleFreeMoves.append(leftMove)
+    if (i != lastHouse) and (j > 0) and (Piece(table[i+upDown][j-1]).team != piece.team):
+        leftMove = [i + upDown, j - 1]
+        leftMovePiece = Piece(table[leftMove[0]][leftMove[1]]) 
 
-        # Se j < 9, verifica jogada para a direita.
-        if (j < 9) and (Piece(table[i+upDown][j+1]).team != piece.team):
-            rightMove = [i + upDown, j + 1]
-            rightMovePiece = Piece(table[rightMove[0]][rightMove[1]])
+        if (leftMovePiece.team == enemy) and (leftMove[0] != lastHouse) and (leftMove[1] != 0) and (Piece(table[i + 2*upDown][j - 2]).team == Team.BLANK):
+            leftMove = [i + 2*upDown, j - 2]
+            possibleEnemyMoves.append(leftMove)
+        elif leftMovePiece.team == Team.BLANK:
+            possibleFreeMoves.append(leftMove)
 
-            if (rightMovePiece.team == enemy) and (rightMove[0] != lastHouse) and (rightMove[1] != 9) and (Piece(table[i + 2*upDown][j + 2]).team == Team.BLANK):
-                rightMove = [i + 2*upDown, j + 2]
-                possibleEnemyMoves.append(rightMove)
-            elif rightMovePiece.team == Team.BLANK:
-                possibleFreeMoves.append(rightMove)
+    if (i != lastHouse) and (j < 9) and (Piece(table[i+upDown][j+1]).team != piece.team):
+        rightMove = [i + upDown, j + 1]
+        rightMovePiece = Piece(table[rightMove[0]][rightMove[1]])
+
+        if (rightMovePiece.team == enemy) and (rightMove[0] != lastHouse) and (rightMove[1] != 9) and (Piece(table[i + 2*upDown][j + 2]).team == Team.BLANK):
+            rightMove = [i + 2*upDown, j + 2]
+            possibleEnemyMoves.append(rightMove)
+        elif rightMovePiece.team == Team.BLANK:
+            possibleFreeMoves.append(rightMove)
     
     if (len(possibleEnemyMoves) > 0):
         return PossibleMoves(True, possibleEnemyMoves)
