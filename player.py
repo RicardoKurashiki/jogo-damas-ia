@@ -112,14 +112,94 @@ class Player:
                 return possibleFreeMoves
 
         def dameMoves():
-            def topLeft():
-                pass
-            def topRight():
-                pass
-            def bottomLeft():
-                pass
-            def bottomRight():
-                pass
+            currentLine = currentPos[0]
+            currentColumn = currentPos[1]
+            piece = Piece(table[currentLine][currentColumn])
+            possibleFreeMoves = list() # Lista de movimentos possíveis de forma geral.
+            possibleEnemyMoves = list() # Lista de movimentos possíveis para caso tenha um inimigo.
+            enemy = 0
+            
+            if (piece.team == Team.WHITE):
+                enemy = Team.BLACK
+            else:
+                enemy = Team.WHITE
+
+            # Movimento CIMA ESQUERDA
+            if (currentLine > 0) and (currentColumn > 0):
+                delta = 1;
+                while ((currentLine - delta) > -1) and ((currentColumn - delta) >  -1):
+                    upLeft = [currentLine - delta, currentColumn - delta]
+                    upLeftPiece = Piece(table[upLeft[0]][upLeft[1]])
+
+                    if (upLeftPiece.team == enemy) and (upLeft[0] != 0) and (upLeft[1] != 0) and (Piece(table[currentLine - (delta+1)][currentColumn - (delta+1)]).team == Team.BLANK):
+                        upLeft = [currentLine - (delta+1), currentColumn - (delta+1)]
+                        possibleEnemyMoves.append(upLeft)
+                        break
+                    elif (upLeftPiece.team == Team.BLANK):
+                        possibleFreeMoves.append(upLeft)
+                    elif (upLeftPiece.team == piece.team):
+                        break
+
+                    delta += 1
+            
+            # Movimento BAIXO DIREITA
+            if (currentLine < 9) and (currentColumn < 9):
+                delta = 1;
+                while ((currentLine + delta) < 10) and ((currentColumn + delta) < 10):
+                    downRight = [currentLine + delta, currentColumn + delta]
+                    downRightPiece = Piece(table[downRight[0]][downRight[1]])
+
+                    if (downRightPiece.team == enemy) and (downRight[0] != 9) and (downRight[1] != 9) and (Piece(table[currentLine + (delta+1)][currentColumn + (delta+1)]).team == Team.BLANK):
+                        downRight = [currentLine + (delta+1), currentColumn + (delta+1)]
+                        possibleEnemyMoves.append(downRight)
+                        break
+                    elif (downRightPiece.team == Team.BLANK):
+                        possibleFreeMoves.append(downRight)
+                    elif (downRightPiece.team == piece.team):
+                        break
+
+                    delta += 1
+
+            # Movimento CIMA DIREITA
+            if (currentLine > 0) and (currentColumn < 9):
+                delta = 1;
+                while ((currentLine - delta) > -1) and ((currentColumn + delta) < 10):
+                    upRight = [currentLine - delta, currentColumn + delta]
+                    upRightPiece = Piece(table[upRight[0]][upRight[1]])
+
+                    if (upRightPiece.team == enemy) and (upRight[0] != 0) and (upRight[1] != 9) and (Piece(table[currentLine - (delta+1)][currentColumn + (delta+1)]).team == Team.BLANK):
+                        upRight = [currentLine - (delta+1), currentColumn + (delta+1)]
+                        possibleEnemyMoves.append(upRight)
+                        break
+                    elif (upRightPiece.team == Team.BLANK):
+                        possibleFreeMoves.append(upRight)
+                    elif (upRightPiece.team == piece.team):
+                        break
+
+                    delta += 1
+            
+            # Movimento BAIXO ESQUERDA
+            if (currentLine < 9) and (currentColumn > 0):
+                delta = 1;
+                while ((currentLine + delta) < 10) and ((currentColumn - delta) != -1):
+                    downLeft = [currentLine + delta, currentColumn - delta]
+                    downLeftPiece = Piece(table[downLeft[0]][downLeft[1]])
+
+                    if (downLeftPiece.team == enemy) and (downLeft[0] != 9) and (downLeft[1] != 0) and (Piece(table[currentLine + (delta+1)][currentColumn - (delta+1)]).team == Team.BLANK):
+                        downLeft = [currentLine + (delta+1), currentColumn - (delta+1)]
+                        possibleEnemyMoves.append(downLeft)
+                        break
+                    elif (downLeftPiece.team == Team.BLANK):
+                        possibleFreeMoves.append(downLeft)
+                    elif (downLeftPiece.team == piece.team):
+                        break
+
+                    delta += 1
+
+            if (len(possibleEnemyMoves) > 0):
+                return possibleEnemyMoves
+            else:
+                return possibleFreeMoves
 
         piece = Piece(table[currentPos[0]][currentPos[1]])
         enemy = Team.BLANK
