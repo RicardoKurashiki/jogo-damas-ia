@@ -1,39 +1,112 @@
+from math import inf
 from piece import Piece
 from definitions import *
+from context import Context
+from table import Table
+import time
 
-class table:
-    def __init__(self, table):
-        self.table = table;
 
-def think(table, team):
-    
-    if (team == Team.BLACK):
-        print("\nBlack Moves:")
-    else:
-        print("\nWhite Moves:")
+class PossibleMoves:
+    def __init__(self, hasEnemy, movesBuffer):
+        self.hasEnemy = hasEnemy
+        self.movesBuffer = movesBuffer
+
+
+class AlphaBeta:
+    def __init__(self, team):
+        self.team = team
+
+    def think(self, tableClass):
+        move = 0
+
+        print(self.minimax(tableClass, 1, self.team))
+
+        return move
+
+    def minimax(self, tableClass, depth, team):
+        time.sleep(3)
+        currentEvaluation = 0
+        enemyTeam = Team.BLANK
+        
+        if (team == Team.BLACK):
+            currentEvaluation = tableClass.blacks
+            enemyTeam = Team.WHITE
+        else:
+            currentEvaluation = tableClass.whites
+            enemyTeam = Team.BLACK
+        
+        if (depth == 0) or (currentEvaluation == 0):
+            return currentEvaluation
+
+        if self.team == team:
+            maxEval = -inf
+            possibleMoves = getAvailableTeamMovements(tableClass.table, team)
+            myTable = Table()
+            for move in possibleMoves:
+                print(f"\n\n{team} [{move.currentPos[0]},{move.currentPos[1]}] >> [{move.nextPos[0]},{move.nextPos[1]}] | Camada : {depth}")
+                myTable.table = tableClass.table
+                myTable.blacks = tableClass.blacks
+                myTable.whites = tableClass.whites
+                myTable.move(move)
+                for i in range(10):
+                    for j in range(10):
+                        print(tableClass.table[i][j], end="")
+                    print()
+                evaluation = self.minimax(myTable, depth-1, enemyTeam)
+                maxEval = max(maxEval, evaluation)
+            return maxEval
+        else:
+            minEval = inf
+            possibleMoves = getAvailableTeamMovements(tableClass.table, team)
+            myTable = Table()
+            for move in possibleMoves:
+                print(f"\n\n{team}[{move.currentPos[0]},{move.currentPos[1]}] >> [{move.nextPos[0]},{move.nextPos[1]}] | Camada : {depth}")
+                myTable.table = tableClass.table
+                myTable.blacks = tableClass.blacks
+                myTable.whites = tableClass.whites
+                myTable.move(move)
+                evaluation = self.minimax(myTable, depth-1, enemyTeam)
+                minEval = min(minEval, evaluation)
+            return minEval
+
+
+def getAvailableTeamMovements(table, team):
+    possibleFreeMoves = list()
+    possibleEnemyMoves = list()
 
     for i in range(0, 10):
         for j in range(0, 10):
-            # Pega as informacoes da posicao i, j do tabuleiro.
             piece = Piece(table[i][j]) 
-            # Se o time da posicao i, j for o mesmo time passado para o alfabeta.
+            
             if (piece.team == team):
-                plays = list()
-
+                plays = PossibleMoves(False, list())
+                
                 if (piece.type == Type.PEDRA):
                     plays = getStoneAvailableMoves(i, j, table)
                 else:
                     plays = getDameAvailableMoves(i, j, table)
 
-                if (len(plays) > 0):
-                    debugString = f"{i},{j} >> " 
-                    for moves in plays:
-                        debugString += (f"[{moves[0]},{moves[1]}]  ")
+                if (plays.hasEnemy == True):
+                    if (len(plays.movesBuffer) > 0):
+                        for moves in plays.movesBuffer:
+                            move = Context([i, j], [moves[0], moves[1]], piece)
+                            possibleEnemyMoves.append(move)
+                else:
+                    if (len(plays.movesBuffer) > 0):
+                        for moves in plays.movesBuffer:
+                            move = Context([i, j], [moves[0], moves[1]], piece)
+                            possibleFreeMoves.append(move)
+    
+    pieceTeam = "B" if team == Team.BLACK else "W"
+    if (len(possibleEnemyMoves) > 0):
+        for move in possibleEnemyMoves:
+            print(f"{pieceTeam}[{move.currentPos[0]},{move.currentPos[1]}] >> [{move.nextPos[0]},{move.nextPos[1]}]")
+        return possibleEnemyMoves
+    else:
+        for move in possibleFreeMoves:
+            print(f"{pieceTeam}[{move.currentPos[0]},{move.currentPos[1]}] >> [{move.nextPos[0]},{move.nextPos[1]}]")
+        return possibleFreeMoves
 
-                    print(debugString)
-
-def play():
-    print("Playing")
 
 def getStoneAvailableMoves(i, j, table):
     piece = Piece(table[i][j])
@@ -80,9 +153,10 @@ def getStoneAvailableMoves(i, j, table):
                 possibleFreeMoves.append(rightMove)
     
     if (len(possibleEnemyMoves) > 0):
-        return possibleEnemyMoves
+        return PossibleMoves(True, possibleEnemyMoves)
     else:
-        return possibleFreeMoves
+        return PossibleMoves(False, possibleFreeMoves)
+
 
 def getDameAvailableMoves(i, j, table):
     piece = Piece(table[i][j])
@@ -168,6 +242,6 @@ def getDameAvailableMoves(i, j, table):
             delta += 1
 
     if (len(possibleEnemyMoves) > 0):
-        return possibleEnemyMoves
+        return PossibleMoves(True, possibleEnemyMoves)
     else:
-        return possibleFreeMoves
+        return PossibleMoves(False, possibleFreeMoves)
