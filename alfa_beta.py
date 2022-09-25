@@ -5,6 +5,10 @@ from context import Context
 from table import Table
 import time
 
+class EvaluatedMove:
+    def __init__(self, context = Context([0,0],[0,0],Piece([0,0])), evaluation = 0):
+        self.context = context
+        self.evaluation = evaluation
 
 class PossibleMoves:
     def __init__(self, hasEnemy, movesBuffer):
@@ -17,58 +21,80 @@ class AlphaBeta:
         self.team = team
 
     def think(self, tableClass):
-        move = 0
-
-        print(self.minimax(tableClass, 1, self.team))
-
+        move = self.minimax(tableClass, 5, self.team).context
+        
         return move
 
     def minimax(self, tableClass, depth, team):
-        time.sleep(3)
-        currentEvaluation = 0
-        enemyTeam = Team.BLANK
-        
-        if (team == Team.BLACK):
-            currentEvaluation = tableClass.blacks
-            enemyTeam = Team.WHITE
-        else:
-            currentEvaluation = tableClass.whites
-            enemyTeam = Team.BLACK
-        
+        currentEvaluation = EvaluatedMove()
+        currentEvaluation.evaluation = getEvaluation(tableClass.table, self.team)
+        enemyTeam = Team.WHITE if team == Team.BLACK else Team.BLACK
+
         if (depth == 0) or (currentEvaluation == 0):
             return currentEvaluation
 
         if self.team == team:
-            maxEval = -inf
-            possibleMoves = getAvailableTeamMovements(tableClass.table, team)
-            myTable = Table()
-            for move in possibleMoves:
-                print(f"\n\n{team} [{move.currentPos[0]},{move.currentPos[1]}] >> [{move.nextPos[0]},{move.nextPos[1]}] | Camada : {depth}")
-                myTable.table = tableClass.table
-                myTable.blacks = tableClass.blacks
-                myTable.whites = tableClass.whites
-                myTable.move(move)
-                for i in range(10):
-                    for j in range(10):
-                        print(tableClass.table[i][j], end="")
-                    print()
-                evaluation = self.minimax(myTable, depth-1, enemyTeam)
-                maxEval = max(maxEval, evaluation)
-            return maxEval
-        else:
-            minEval = inf
-            possibleMoves = getAvailableTeamMovements(tableClass.table, team)
-            myTable = Table()
-            for move in possibleMoves:
-                print(f"\n\n{team}[{move.currentPos[0]},{move.currentPos[1]}] >> [{move.nextPos[0]},{move.nextPos[1]}] | Camada : {depth}")
-                myTable.table = tableClass.table
-                myTable.blacks = tableClass.blacks
-                myTable.whites = tableClass.whites
-                myTable.move(move)
-                evaluation = self.minimax(myTable, depth-1, enemyTeam)
-                minEval = min(minEval, evaluation)
-            return minEval
+            moveMaxEval = EvaluatedMove()
+            moveMaxEval.context = Context([0,0],[0,0],Piece([0,0]))
+            moveMaxEval.evaluation = -inf
 
+            possibleMoves = getAvailableTeamMovements(tableClass.table, team)
+            myTable = Table()
+            
+            for move in possibleMoves:
+                myTable.copy(tableClass)
+                myTable.move(move, False)
+
+                moveEval = EvaluatedMove()
+                moveEval.context = move
+                moveEval.evaluation = self.minimax(myTable, depth-1, enemyTeam).evaluation
+                
+                if (moveMaxEval.evaluation < moveEval.evaluation):
+                    moveMaxEval = moveEval
+
+            return moveMaxEval
+        else:
+            moveMinEval = EvaluatedMove()
+            moveMinEval.context = Context([0,0],[0,0],Piece([0,0]))
+            moveMinEval.evaluation = inf
+
+            possibleMoves = getAvailableTeamMovements(tableClass.table, team)
+            myTable = Table()
+
+            for move in possibleMoves:
+                myTable.copy(tableClass)
+                myTable.move(move, False)
+
+                moveEval = EvaluatedMove()
+                moveEval.context = move
+                moveEval.evaluation = self.minimax(myTable, depth-1, enemyTeam).evaluation
+
+                if (moveMinEval.evaluation > moveEval.evaluation):
+                    moveMinEval = moveEval
+            
+            return moveMinEval
+
+
+def getEvaluation(table, team):
+    evaluation = 0
+    blackPieces = getPiecesNumber(table, Team.BLACK)
+    whitePieces = getPiecesNumber(table, Team.WHITE)
+
+    if (team == Team.BLACK):
+        evaluation = (blackPieces/whitePieces)*1000
+    else:
+        evaluation = (whitePieces/blackPieces)*1000
+
+    return evaluation
+
+
+def getPiecesNumber(table, team):
+    counter = 0
+    for i in range(10):
+        for j in range(10):
+            if Piece(table[i][j]).team == team:
+                counter += 1
+    return counter
 
 def getAvailableTeamMovements(table, team):
     possibleFreeMoves = list()
@@ -99,12 +125,12 @@ def getAvailableTeamMovements(table, team):
     
     pieceTeam = "B" if team == Team.BLACK else "W"
     if (len(possibleEnemyMoves) > 0):
-        for move in possibleEnemyMoves:
-            print(f"{pieceTeam}[{move.currentPos[0]},{move.currentPos[1]}] >> [{move.nextPos[0]},{move.nextPos[1]}]")
+        # for move in possibleEnemyMoves:
+        #     print(f"{pieceTeam}[{move.currentPos[0]},{move.currentPos[1]}] >> [{move.nextPos[0]},{move.nextPos[1]}]")
         return possibleEnemyMoves
     else:
-        for move in possibleFreeMoves:
-            print(f"{pieceTeam}[{move.currentPos[0]},{move.currentPos[1]}] >> [{move.nextPos[0]},{move.nextPos[1]}]")
+        # for move in possibleFreeMoves:
+        #     print(f"{pieceTeam}[{move.currentPos[0]},{move.currentPos[1]}] >> [{move.nextPos[0]},{move.nextPos[1]}]")
         return possibleFreeMoves
 
 

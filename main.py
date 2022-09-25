@@ -3,6 +3,7 @@ from context import Context
 from piece import Piece
 from player import Player
 from definitions import *
+from alfa_beta import AlphaBeta
 
 definitions = Definitions()
 
@@ -37,13 +38,18 @@ if (player.team == Team.BLACK):
 else:
     enemy = Team.BLACK
 
+controller = AlphaBeta(enemy)
+
 while game:
     table.showPoints()
     if (turn == player.team):
         context = player.play(table.table)
-        table.move(context)
+        table.move(context, True)
         turn = enemy
     else:
+        print("Pensando...")
+        context = controller.think(table)
+        table.move(context, True)
         turn = player.team
     table.updatePoints()
     if (table.gameEnded()):
