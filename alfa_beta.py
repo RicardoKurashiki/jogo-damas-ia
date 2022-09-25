@@ -23,7 +23,7 @@ def think(table, team):
                 if (piece.type == Type.PEDRA):
                     plays = getStoneAvailableMoves(i, j, table)
                 else:
-                    plays = getStoneAvailableMoves(i, j, table)
+                    plays = getDameAvailableMoves(i, j, table)
 
                 if (len(plays) > 0):
                     debugString = f"{i},{j} >> " 
@@ -62,7 +62,7 @@ def getStoneAvailableMoves(i, j, table):
             leftMove = [i + upDown, j - 1]
             leftMovePiece = Piece(table[leftMove[0]][leftMove[1]]) 
 
-            if (leftMovePiece.team == enemy) and (leftMove[0] != lastHouse) and (leftMove[1] != 0) and (Piece(table[i + 2*upDown][j - 2]) == Team.BLANK):
+            if (leftMovePiece.team == enemy) and (leftMove[0] != lastHouse) and (leftMove[1] != 0) and (Piece(table[i + 2*upDown][j - 2]).team == Team.BLANK):
                 leftMove = [i + 2*upDown, j - 2]
                 possibleEnemyMoves.append(leftMove)
             elif leftMovePiece.team == Team.BLANK:
@@ -73,7 +73,7 @@ def getStoneAvailableMoves(i, j, table):
             rightMove = [i + upDown, j + 1]
             rightMovePiece = Piece(table[rightMove[0]][rightMove[1]])
 
-            if (rightMovePiece.team == enemy) and (rightMove[0] != lastHouse) and (rightMove[1] != 9) and (Piece(table[i + 2*upDown][j + 2]) == Team.BLANK):
+            if (rightMovePiece.team == enemy) and (rightMove[0] != lastHouse) and (rightMove[1] != 9) and (Piece(table[i + 2*upDown][j + 2]).team == Team.BLANK):
                 rightMove = [i + 2*upDown, j + 2]
                 possibleEnemyMoves.append(rightMove)
             elif rightMovePiece.team == Team.BLANK:
@@ -85,4 +85,89 @@ def getStoneAvailableMoves(i, j, table):
         return possibleFreeMoves
 
 def getDameAvailableMoves(i, j, table):
-    print("Dame play")
+    piece = Piece(table[i][j])
+    possibleFreeMoves = list() # Lista de movimentos possíveis de forma geral.
+    possibleEnemyMoves = list() # Lista de movimentos possíveis para caso tenha um inimigo.
+    enemy = 0
+    
+    if (piece.team == Team.WHITE):
+        enemy = Team.BLACK
+    else:
+        enemy = Team.WHITE
+
+    # Movimento CIMA ESQUERDA
+    if (i > 0) and (j > 0):
+        delta = 1;
+        while ((i - delta) > -1) and ((j - delta) >  -1):
+            upLeft = [i - delta, j - delta]
+            upLeftPiece = Piece(table[upLeft[0]][upLeft[1]])
+
+            if (upLeftPiece.team == enemy) and (upLeft[0] != 0) and (upLeft[1] != 0) and (Piece(table[i - (delta+1)][j - (delta+1)]).team == Team.BLANK):
+                upLeft = [i - (delta+1), j - (delta+1)]
+                possibleEnemyMoves.append(upLeft)
+                break
+            elif (upLeftPiece.team == Team.BLANK):
+                possibleFreeMoves.append(upLeft)
+            elif (upLeftPiece.team == piece.team):
+                break
+
+            delta += 1
+    
+    # Movimento BAIXO DIREITA
+    if (i < 9) and (j < 9):
+        delta = 1;
+        while ((i + delta) < 10) and ((j + delta) < 10):
+            downRight = [i + delta, j + delta]
+            downRightPiece = Piece(table[downRight[0]][downRight[1]])
+
+            if (downRightPiece.team == enemy) and (downRight[0] != 9) and (downRight[1] != 9) and (Piece(table[i + (delta+1)][j + (delta+1)]).team == Team.BLANK):
+                downRight = [i + (delta+1), j + (delta+1)]
+                possibleEnemyMoves.append(downRight)
+                break
+            elif (downRightPiece.team == Team.BLANK):
+                possibleFreeMoves.append(downRight)
+            elif (downRightPiece.team == piece.team):
+                break
+
+            delta += 1
+
+    # Movimento CIMA DIREITA
+    if (i > 0) and (j < 9):
+        delta = 1;
+        while ((i - delta) > -1) and ((j + delta) < 10):
+            upRight = [i - delta, j + delta]
+            upRightPiece = Piece(table[upRight[0]][upRight[1]])
+
+            if (upRightPiece.team == enemy) and (upRight[0] != 0) and (upRight[1] != 9) and (Piece(table[i - (delta+1)][j + (delta+1)]).team == Team.BLANK):
+                upRight = [i - (delta+1), j + (delta+1)]
+                possibleEnemyMoves.append(upRight)
+                break
+            elif (upRightPiece.team == Team.BLANK):
+                possibleFreeMoves.append(upRight)
+            elif (upRightPiece.team == piece.team):
+                break
+
+            delta += 1
+    
+    # Movimento BAIXO ESQUERDA
+    if (i < 9) and (j > 0):
+        delta = 1;
+        while ((i + delta) < 10) and ((j - delta) != -1):
+            downLeft = [i + delta, j - delta]
+            downLeftPiece = Piece(table[downLeft[0]][downLeft[1]])
+
+            if (downLeftPiece.team == enemy) and (downLeft[0] != 9) and (downLeft[1] != 0) and (Piece(table[i + (delta+1)][j - (delta+1)]).team == Team.BLANK):
+                downLeft = [i + (delta+1), j - (delta+1)]
+                possibleEnemyMoves.append(downLeft)
+                break
+            elif (downLeftPiece.team == Team.BLANK):
+                possibleFreeMoves.append(downLeft)
+            elif (downLeftPiece.team == piece.team):
+                break
+
+            delta += 1
+
+    if (len(possibleEnemyMoves) > 0):
+        return possibleEnemyMoves
+    else:
+        return possibleFreeMoves
