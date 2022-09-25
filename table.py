@@ -20,12 +20,18 @@ Exemplo de tabuleiro:
 
 from definitions import *
 from piece import Piece
+import copy
 
 class Table:
-    def __init__(self):
-        self.table = []
-        self.blacks = 0
-        self.whites = 0
+    def __init__(self, table=[], blacks=0, whites=0):
+        self.table = copy.deepcopy(table)
+        self.blacks = copy.deepcopy(blacks)
+        self.whites = copy.deepcopy(whites)
+
+    def copy(self, table):
+        self.table = copy.deepcopy(table.table)
+        self.blacks = copy.deepcopy(table.blacks)
+        self.whites = copy.deepcopy(table.whites)
 
     def generateTable(self):
         def generatePieces(type, rows):
@@ -41,14 +47,11 @@ class Table:
                 self.table.append(spaces)
                 cont -= 1
         
-        generatePieces([2,1], 3)
-        generatePieces([0,0], 1)
-        generatePieces([2,1], 1)
-        generatePieces([0,0], 1)
+        generatePieces([2,1], 4)
+        generatePieces([0,0], 2)
         generatePieces([1,1], 4)
 
     def showTable(self):
-        print('\n\n')
         for i in range(10):
             print(f"{i} |", end=" ")
             for j in range(10):
@@ -60,7 +63,7 @@ class Table:
         print("  |", end="")
         for i in range(10):
             print(f" {i}", end="")
-        print('\n')
+        print()
 
     def start(self):
         self.blacks = 20
@@ -71,7 +74,7 @@ class Table:
 
     # =============================== #
 
-    def move(self, context):
+    def move(self, context, show=False):
         def clearPlaces():
             for i in range(int(context.getDistance())):
                 if (context.getDirection() == "SE"):
@@ -87,4 +90,25 @@ class Table:
         nextPos = context.nextPos
         clearPlaces()
         self.table[nextPos[0]][nextPos[1]] = context.piece.getValue()
-        self.showTable()
+        if (show):
+            self.showTable()
+
+    def updatePoints(self):
+        b = 0
+        w = 0
+        for i in range(10):
+            for j in range(10):
+                if (self.table[i][j][0] == Team.BLACK.value):
+                    b += 1
+                elif (self.table[i][j][0] == Team.WHITE.value):
+                    w += 1
+        self.blacks = b
+        self.whites = w
+
+    def showPoints(self):
+        print(f"Peças pretas: {self.blacks} x Peças brancas: {self.whites}")
+
+    def gameEnded(self):
+        v1 = self.blacks == 0
+        v2 = self.whites == 0
+        return (v1 or v2)
