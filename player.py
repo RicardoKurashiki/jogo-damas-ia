@@ -151,9 +151,10 @@ class Player:
                     upLeft = [currentLine - delta, currentColumn - delta]
                     upLeftPiece = Piece(table[upLeft[0]][upLeft[1]])
 
-                    if (upLeftPiece.team == enemy) and (upLeft[0] != 0) and (upLeft[1] != 0) and (Piece(table[currentLine - (delta+1)][currentColumn - (delta+1)]).team == Team.BLANK):
-                        upLeft = [currentLine - (delta+1), currentColumn - (delta+1)]
-                        possibleEnemyMoves.append(upLeft)
+                    if (upLeftPiece.team == enemy) and (upLeft[0] != 0) and (upLeft[1] != 0):
+                        if (Piece(table[currentLine - (delta+1)][currentColumn - (delta+1)]).team == Team.BLANK):
+                            upLeft = [currentLine - (delta+1), currentColumn - (delta+1)]
+                            possibleEnemyMoves.append(upLeft)
                         break
                     elif (upLeftPiece.team == Team.BLANK):
                         possibleFreeMoves.append(upLeft)
@@ -169,9 +170,10 @@ class Player:
                     downRight = [currentLine + delta, currentColumn + delta]
                     downRightPiece = Piece(table[downRight[0]][downRight[1]])
 
-                    if (downRightPiece.team == enemy) and (downRight[0] != 9) and (downRight[1] != 9) and (Piece(table[currentLine + (delta+1)][currentColumn + (delta+1)]).team == Team.BLANK):
-                        downRight = [currentLine + (delta+1), currentColumn + (delta+1)]
-                        possibleEnemyMoves.append(downRight)
+                    if ((downRightPiece.team == enemy) and (downRight[0] != 9) and (downRight[1] != 9)):
+                        if Piece(table[currentLine + (delta+1)][currentColumn + (delta+1)]).team == Team.BLANK:
+                            downRight = [currentLine + (delta+1), currentColumn + (delta+1)]
+                            possibleEnemyMoves.append(downRight)
                         break
                     elif (downRightPiece.team == Team.BLANK):
                         possibleFreeMoves.append(downRight)
@@ -187,9 +189,10 @@ class Player:
                     upRight = [currentLine - delta, currentColumn + delta]
                     upRightPiece = Piece(table[upRight[0]][upRight[1]])
 
-                    if (upRightPiece.team == enemy) and (upRight[0] != 0) and (upRight[1] != 9) and (Piece(table[currentLine - (delta+1)][currentColumn + (delta+1)]).team == Team.BLANK):
-                        upRight = [currentLine - (delta+1), currentColumn + (delta+1)]
-                        possibleEnemyMoves.append(upRight)
+                    if (upRightPiece.team == enemy) and (upRight[0] != 0) and (upRight[1] != 9):
+                        if (Piece(table[currentLine - (delta+1)][currentColumn + (delta+1)]).team == Team.BLANK):
+                            upRight = [currentLine - (delta+1), currentColumn + (delta+1)]
+                            possibleEnemyMoves.append(upRight)
                         break
                     elif (upRightPiece.team == Team.BLANK):
                         possibleFreeMoves.append(upRight)
@@ -205,9 +208,10 @@ class Player:
                     downLeft = [currentLine + delta, currentColumn - delta]
                     downLeftPiece = Piece(table[downLeft[0]][downLeft[1]])
 
-                    if (downLeftPiece.team == enemy) and (downLeft[0] != 9) and (downLeft[1] != 0) and (Piece(table[currentLine + (delta+1)][currentColumn - (delta+1)]).team == Team.BLANK):
-                        downLeft = [currentLine + (delta+1), currentColumn - (delta+1)]
-                        possibleEnemyMoves.append(downLeft)
+                    if (downLeftPiece.team == enemy) and (downLeft[0] != 9) and (downLeft[1] != 0):
+                        if (Piece(table[currentLine + (delta+1)][currentColumn - (delta+1)]).team == Team.BLANK):
+                            downLeft = [currentLine + (delta+1), currentColumn - (delta+1)]
+                            possibleEnemyMoves.append(downLeft)
                         break
                     elif (downLeftPiece.team == Team.BLANK):
                         possibleFreeMoves.append(downLeft)
@@ -250,14 +254,18 @@ class Player:
                 possibleMoves = self.possibleMoves(currentPos, table)
                 if (len(possibleMoves) == 0):
                     print("Esta peça não possui movimentos válidos.")
-        context = self.getNextPos(currentPos, possibleMoves, table)
-        tempTable = Table()
-        tempTable.copy(tableClass)
-        captured = tempTable.move(context, False)
-        self.possibleMoves(context.nextPos, tempTable.table)
-        context.capturing = captured and self.capturing
-        self.logs.append(context)
-        return context
+        if (len(possibleMoves) > 0):
+            context = self.getNextPos(currentPos, possibleMoves, table)
+            tempTable = Table()
+            tempTable.copy(tableClass)
+            captured = tempTable.move(context, False)
+            self.possibleMoves(context.nextPos, tempTable.table)
+            context.capturing = captured and self.capturing
+            self.logs.append(context)
+            return context
+        else:
+            captured = False
+            self.capturing = False
 
 
 

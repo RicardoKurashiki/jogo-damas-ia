@@ -50,8 +50,8 @@ class Table:
         # generatePieces([2,1], 4)
         # generatePieces([0,0], 2)
         # generatePieces([1,1], 4)
-        generatePieces([0,0], 10)
 
+        generatePieces([0,0], 10)
 
     def showTable(self):
         for i in range(10):
@@ -109,7 +109,7 @@ class Table:
     def hasCaptured(self, context):
         enemy = Team.BLACK if context.piece.team == Team.WHITE else Team.WHITE
         currentPos = context.currentPos
-        for i in range(int(context.getDistance())):
+        for i in range(1, int(context.getDistance())+1):
             if (context.getDirection() == "SE"):
                 if (self.table[currentPos[0]+i][currentPos[1]+i][0] == enemy.value):
                     return True

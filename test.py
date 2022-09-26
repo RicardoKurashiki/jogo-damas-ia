@@ -9,21 +9,30 @@ import time
 t1 = Table()
 t1.start()
 
+blacksSpots = [
+    [9,1], [9,3], [9,5], [9,7], [9,9],
+    [8,2], [8,4], [2,2]
+]
 
-t1.move(Context([7,0],[7,0],Piece([2,1]),False), False)
+whiteSpots = [
+    [2,0], [0,8], [1,5], [1,7], [1,9],
+    [2,6], [2,8], [3,3], [3,5], [4,8],
+    [5,5], [1,3]
+]
 
-t1.move(Context([8,1],[8,1],Piece([1,1]),False), False)
-t1.move(Context([8,3],[8,3],Piece([1,1]),False), False)
-t1.move(Context([6,5],[6,5],Piece([1,1]),False), False)
-t1.move(Context([8,5],[8,5],Piece([1,1]),False), False)
-t1.move(Context([8,7],[8,7],Piece([1,1]),False), False)
-t1.move(Context([8,7],[8,7],Piece([1,1]),False), False)
-t1.move(Context([6,7],[6,7],Piece([1,1]),False), True)
+for coord in blacksSpots:
+    t1.move(Context(coord, coord, Piece([1,1]), False), False)
 
-player = Player(Team.WHITE.value)
+for coord in whiteSpots:
+    t1.move(Context(coord, coord, Piece([2,1]), False), False)
 
-controller = AlphaBeta(Team.BLACK)
-turn = player.team
+t1.showTable()
+
+player = Player(Team.BLACK.value)
+
+controller = AlphaBeta(Team.WHITE)
+turn = Team.BLACK
+enemy = Team.WHITE
 game = True
 
 while game:
@@ -32,7 +41,7 @@ while game:
         context = player.play(t1)
         t1.move(context, True)
         if (not context.capturing):
-            turn = Team.BLACK
+            turn = enemy
     else:
         context = controller.think(t1)
         if (type(context) is list):
