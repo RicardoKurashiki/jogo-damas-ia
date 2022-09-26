@@ -45,10 +45,15 @@ while game:
     if (turn == player.team):
         context = player.play(table.table)
         table.move(context, True)
-        turn = enemy
+        if (not context.capturing):
+            turn = enemy
     else:
         context = controller.think(table)
-        table.move(context, True)
+        if (type(context) is list):
+            for move in context:
+                table.move(move, True)
+        else:
+            table.move(context, True)
         turn = player.team
     table.updatePoints()
     if (table.gameEnded()):

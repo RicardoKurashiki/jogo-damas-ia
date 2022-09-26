@@ -47,9 +47,9 @@ class Table:
                 self.table.append(spaces)
                 cont -= 1
         
-        generatePieces([2,1], 4)
-        generatePieces([0,0], 2)
-        generatePieces([1,1], 4)
+        # generatePieces([2,1], 4)
+        generatePieces([0,0], 10)
+        # generatePieces([1,1], 4)
 
     def showTable(self):
         for i in range(10):
@@ -71,7 +71,6 @@ class Table:
         self.generateTable()
         self.showTable()
         
-
     # =============================== #
 
     def move(self, context, show=False):
@@ -90,8 +89,18 @@ class Table:
         nextPos = context.nextPos
         clearPlaces()
         self.table[nextPos[0]][nextPos[1]] = context.piece.getValue()
+        piece = context.piece
+        lastHouse = -1
+        if (piece.team == Team.BLACK):
+            lastHouse = 0
+        else:
+            lastHouse = 9
+        if (not context.capturing):
+            if (nextPos[0] == lastHouse):
+                self.promote(context)
         if (show):
             self.showTable()
+
 
     def updatePoints(self):
         b = 0
@@ -112,3 +121,9 @@ class Table:
         v1 = self.blacks == 0
         v2 = self.whites == 0
         return (v1 or v2)
+
+    def promote(self, context):
+        nextPos = context.nextPos
+        pieceValue = context.piece.getValue()
+        pieceValue[1] = Type.DAMA.value
+        self.table[nextPos[0]][nextPos[1]] = pieceValue

@@ -8,16 +8,26 @@ import time
 t1 = Table()
 t1.start()
 
-t1.move(Context([5,2],[5,2],Piece([1,1])), False)
-t1.move(Context([3,8],[3,8],Piece([1,1])), False)
-t1.move(Context([5,8],[5,8],Piece([1,1])), False)
 
-t1.move(Context([6,1],[6,1],Piece([2,1])), False)
-t1.move(Context([6,7],[6,7],Piece([2,1])), True)
+t1.move(Context([7,0],[7,0],Piece([2,1]),False), False)
+
+t1.move(Context([8,1],[8,1],Piece([1,1]),False), False)
+t1.move(Context([8,3],[8,3],Piece([1,1]),False), False)
+t1.move(Context([6,5],[6,5],Piece([1,1]),False), False)
+t1.move(Context([8,5],[8,5],Piece([1,1]),False), False)
+t1.move(Context([8,7],[8,7],Piece([1,1]),False), False)
+t1.move(Context([8,7],[8,7],Piece([1,1]),False), False)
+t1.move(Context([6,7],[6,7],Piece([1,1]),False), True)
 
 controller = AlphaBeta(Team.WHITE)
 
 context = controller.think(t1)
-t1.move(context, True)
+
+if (type(context) is list):
+    for move in context:
+        t1.move(move, True)
+else:
+    t1.move(context, True)
+
 context = controller.think(t1)
 t1.move(context, True)

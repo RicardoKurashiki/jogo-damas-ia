@@ -1,7 +1,4 @@
 from math import inf
-from pydoc import doc
-from tkinter import E
-from typing import Counter
 from piece import Piece
 from definitions import *
 from context import Context
@@ -22,28 +19,72 @@ class PossibleMoves:
 class AlphaBeta:
     def __init__(self, team):
         self.team = team
-        self.lastEat = EvaluatedMove()
+        self.lastMove = EvaluatedMove()
+
+    def checkIfHasCascade(self, tableClass):
+        allMoves = getAvailableTeamMovements(tableClass.table, self.team)
+        if allMoves.hasEnemy:
+            for moveContext in allMoves.movesBuffer:
+                eatCounter = getEatCounter(tableClass, moveContext)
+                if (eatCounter > 1):
+                    moveContext.capturing = True
+                    return moveContext
+        return None
+
+    def playCascade(self, tableClass, move, listMoves=[]):
+        movementList = listMoves
+        movementList.append(move)
+        tempTable = Table()
+        tempTable.copy(tableClass)
+        tempTable.move(move, False)
+        posMoves = possibleMoves(move.nextPos, tempTable.table)
+        eatValues = {}
+        for coord in posMoves:
+            context = Context(move.nextPos, coord, move.piece, True)
+            counter = getEatCounter(tempTable, context)
+            if (counter != 0):
+                eatValues[f"{coord[0]},{coord[1]}"] = counter
+        if (len(eatValues) == 0):
+            movementList[-1].capturing = False
+            return movementList
+        maxEat = -inf
+        c = ""
+        for k in eatValues.keys():
+            if (eatValues[k] >= maxEat):
+                maxEat = eatValues[k]
+                c = k
+        selectedCoord = [int(c.split(',')[0]),int(c.split(',')[1])]
+        context = Context(move.nextPos, selectedCoord, move.piece, True)
+        
+        return self.playCascade(tempTable, context, movementList)
 
     def think(self, tableClass):
         print("Pensando...")
 
-        self.lastEat = self.minimax(tableClass, -inf, inf, 2, self.team)
-        move = self.lastEat.context
+        cascade = self.checkIfHasCascade(tableClass)
+
+        if (cascade != None):
+            move = self.playCascade(tableClass, cascade)
+        else:
+            self.lastMove = self.minimax(tableClass, -inf, inf, 2, self.team)
+            move = self.lastMove.context
         
-        print(f"Máquina joga: {move.currentPos[0]},{move.currentPos[0]} >> {move.nextPos[0]},{move.nextPos[0]}")
+        if (type(move) is list):
+            for m in move:
+                print(f"Máquina joga: {m.currentPos[0]},{m.currentPos[1]} >> {m.nextPos[0]},{m.nextPos[1]}")
+        else:
+            print(f"Máquina joga: {move.currentPos[0]},{move.currentPos[1]} >> {move.nextPos[0]},{move.nextPos[1]}")
 
         return move
 
-    def minimax(self, tableClass, alpha, beta, depth, team, lockPiece = 0):
+    def minimax(self, tableClass, alpha, beta, depth, team):
         currentEvaluation = EvaluatedMove()
         currentEvaluation.evaluation = getEvaluation(tableClass.table, self.team)
         enemyTeam = Team.WHITE if team == Team.BLACK else Team.BLACK
-        time.sleep(2)
 
-        if (depth == 0) or (currentEvaluation == 0):
+        if (depth == 0) or (currentEvaluation.evaluation == 0):
             return currentEvaluation
 
-        print(currentEvaluation.evaluation)
         if self.team == team:
             moveMaxEval = EvaluatedMove()
             moveMaxEval.context = Context([0,0],[0,0],Piece([0,0]))
@@ -53,13 +94,8 @@ class AlphaBeta:
             myTable = Table()
             
             for move in possibleMoves.movesBuffer:
-                # bonus = 1
-                # if (possibleMoves.hasEnemy == True):
-                #     if (move.currentPos == self.lastEat.context.nextPos):
-                #         bonus = 1.5
-
                 myTable.copy(tableClass)
-                myTable.move(move, True)
+                myTable.move(move, False)
 
                 moveEval = EvaluatedMove()
                 moveEval.context = move
@@ -85,18 +121,14 @@ class AlphaBeta:
             myTable = Table()
 
             for move in possibleMoves.movesBuffer:
-                eatCounter = getEatCounter(tableClass, move)
-
+    
                 myTable.copy(tableClass)
-                myTable.move(move, True)
+                myTable.move(move, False)
 
                 moveEval = EvaluatedMove()
                 moveEval.context = move
 
-                if (possibleMoves.hasEnemy == True) and eatCounter > 1:
-                    moveEval.evaluation = self.minimax(myTable, alpha, beta, depth-1, team, move).evaluation
-                else:
-                    moveEval.evaluation = self.minimax(myTable, alpha, beta, depth-1, enemyTeam).evaluation
+                moveEval.evaluation = self.minimax(myTable, alpha, beta, depth-1, enemyTeam).evaluation
 
                 if (moveMinEval.evaluation > moveEval.evaluation):
                     moveMinEval = moveEval
@@ -245,7 +277,6 @@ def getStoneAvailableMoves(i, j, table):
     else:
         return PossibleMoves(False, possibleFreeMoves)
 
-
 def getDameAvailableMoves(i, j, table):
     piece = Piece(table[i][j])
     possibleFreeMoves = list() # Lista de movimentos possíveis de forma geral.
@@ -333,3 +364,162 @@ def getDameAvailableMoves(i, j, table):
         return PossibleMoves(True, possibleEnemyMoves)
     else:
         return PossibleMoves(False, possibleFreeMoves)
+
+def possibleMoves(currentPos, table):
+    def stoneMoves():
+        i = currentPos[0]
+        j = currentPos[1]
+        piece = Piece(table[i][j])
+        possibleFreeMoves = list() # Lista de movimentos possíveis de forma geral.
+        possibleEnemyMoves = list() # Lista de movimentos possíveis para caso tenha um inimigo.
+        upDown = 0
+        lastHouse = 0
+        canReverseEat = False
+        
+        if (piece.team == Team.WHITE):
+            upDown = 1
+            lastHouse = 9
+            canReverseEat = i > 1
+        else:
+            upDown = -1
+            lastHouse = 0
+            canReverseEat = i < 8
+
+        # -------------- Verificacao de Possivel Jogada --------------
+        # Se for branca, e ja estiver na posicao 9, nao tem como "descer" mais.
+        # Se for preta, e ja estiver na posicao 0, nao tem como "subir" mais.
+        
+        if (canReverseEat == True) and (j > 1) and (Piece(table[i-upDown][j-1]).team == enemy) and (Piece(table[i - 2*upDown][j - 2]).team == Team.BLANK):
+            revMove = [i - 2*upDown, j - 2]
+            possibleEnemyMoves.append(revMove)
+
+        if (canReverseEat == True) and (j < 8) and (Piece(table[i-upDown][j+1]).team == enemy) and (Piece(table[i - 2*upDown][j + 2]).team == Team.BLANK):
+            revMove = [i - 2*upDown, j + 2]
+            possibleEnemyMoves.append(revMove)
+
+        if (i != lastHouse) and (j > 0) and (Piece(table[i+upDown][j-1]).team != piece.team):
+            leftMove = [i + upDown, j - 1]
+            leftMovePiece = Piece(table[leftMove[0]][leftMove[1]]) 
+
+            if (leftMovePiece.team == enemy) and (leftMove[0] != lastHouse) and (leftMove[1] != 0) and (Piece(table[i + 2*upDown][j - 2]).team == Team.BLANK):
+                leftMove = [i + 2*upDown, j - 2]
+                possibleEnemyMoves.append(leftMove)
+            elif leftMovePiece.team == Team.BLANK:
+                possibleFreeMoves.append(leftMove)
+
+        if (i != lastHouse) and (j < 9) and (Piece(table[i+upDown][j+1]).team != piece.team):
+            rightMove = [i + upDown, j + 1]
+            rightMovePiece = Piece(table[rightMove[0]][rightMove[1]])
+
+            if (rightMovePiece.team == enemy) and (rightMove[0] != lastHouse) and (rightMove[1] != 9) and (Piece(table[i + 2*upDown][j + 2]).team == Team.BLANK):
+                rightMove = [i + 2*upDown, j + 2]
+                possibleEnemyMoves.append(rightMove)
+            elif rightMovePiece.team == Team.BLANK:
+                possibleFreeMoves.append(rightMove)
+        
+        if (len(possibleEnemyMoves) > 0):
+            return possibleEnemyMoves
+        else:
+            return possibleFreeMoves
+
+    def dameMoves():
+        currentLine = currentPos[0]
+        currentColumn = currentPos[1]
+        piece = Piece(table[currentLine][currentColumn])
+        possibleFreeMoves = list() # Lista de movimentos possíveis de forma geral.
+        possibleEnemyMoves = list() # Lista de movimentos possíveis para caso tenha um inimigo.
+        enemy = 0
+        
+        if (piece.team == Team.WHITE):
+            enemy = Team.BLACK
+        else:
+            enemy = Team.WHITE
+
+        # Movimento CIMA ESQUERDA
+        if (currentLine > 0) and (currentColumn > 0):
+            delta = 1;
+            while ((currentLine - delta) > -1) and ((currentColumn - delta) >  -1):
+                upLeft = [currentLine - delta, currentColumn - delta]
+                upLeftPiece = Piece(table[upLeft[0]][upLeft[1]])
+
+                if (upLeftPiece.team == enemy) and (upLeft[0] != 0) and (upLeft[1] != 0) and (Piece(table[currentLine - (delta+1)][currentColumn - (delta+1)]).team == Team.BLANK):
+                    upLeft = [currentLine - (delta+1), currentColumn - (delta+1)]
+                    possibleEnemyMoves.append(upLeft)
+                    break
+                elif (upLeftPiece.team == Team.BLANK):
+                    possibleFreeMoves.append(upLeft)
+                elif (upLeftPiece.team == piece.team):
+                    break
+
+                delta += 1
+        
+        # Movimento BAIXO DIREITA
+        if (currentLine < 9) and (currentColumn < 9):
+            delta = 1;
+            while ((currentLine + delta) < 10) and ((currentColumn + delta) < 10):
+                downRight = [currentLine + delta, currentColumn + delta]
+                downRightPiece = Piece(table[downRight[0]][downRight[1]])
+
+                if (downRightPiece.team == enemy) and (downRight[0] != 9) and (downRight[1] != 9) and (Piece(table[currentLine + (delta+1)][currentColumn + (delta+1)]).team == Team.BLANK):
+                    downRight = [currentLine + (delta+1), currentColumn + (delta+1)]
+                    possibleEnemyMoves.append(downRight)
+                    break
+                elif (downRightPiece.team == Team.BLANK):
+                    possibleFreeMoves.append(downRight)
+                elif (downRightPiece.team == piece.team):
+                    break
+
+                delta += 1
+
+        # Movimento CIMA DIREITA
+        if (currentLine > 0) and (currentColumn < 9):
+            delta = 1;
+            while ((currentLine - delta) > -1) and ((currentColumn + delta) < 10):
+                upRight = [currentLine - delta, currentColumn + delta]
+                upRightPiece = Piece(table[upRight[0]][upRight[1]])
+
+                if (upRightPiece.team == enemy) and (upRight[0] != 0) and (upRight[1] != 9) and (Piece(table[currentLine - (delta+1)][currentColumn + (delta+1)]).team == Team.BLANK):
+                    upRight = [currentLine - (delta+1), currentColumn + (delta+1)]
+                    possibleEnemyMoves.append(upRight)
+                    break
+                elif (upRightPiece.team == Team.BLANK):
+                    possibleFreeMoves.append(upRight)
+                elif (upRightPiece.team == piece.team):
+                    break
+
+                delta += 1
+        
+        # Movimento BAIXO ESQUERDA
+        if (currentLine < 9) and (currentColumn > 0):
+            delta = 1;
+            while ((currentLine + delta) < 10) and ((currentColumn - delta) != -1):
+                downLeft = [currentLine + delta, currentColumn - delta]
+                downLeftPiece = Piece(table[downLeft[0]][downLeft[1]])
+
+                if (downLeftPiece.team == enemy) and (downLeft[0] != 9) and (downLeft[1] != 0) and (Piece(table[currentLine + (delta+1)][currentColumn - (delta+1)]).team == Team.BLANK):
+                    downLeft = [currentLine + (delta+1), currentColumn - (delta+1)]
+                    possibleEnemyMoves.append(downLeft)
+                    break
+                elif (downLeftPiece.team == Team.BLANK):
+                    possibleFreeMoves.append(downLeft)
+                elif (downLeftPiece.team == piece.team):
+                    break
+
+                delta += 1
+
+        if (len(possibleEnemyMoves) > 0):
+            return possibleEnemyMoves
+        else:
+            return possibleFreeMoves
+
+    piece = Piece(table[currentPos[0]][currentPos[1]])
+    enemy = Team.BLANK
+    if (piece.team == Team.BLACK):
+        enemy = Team.WHITE
+    else:
+        enemy = Team.BLACK
+
+    if (piece.type == Type.PEDRA):
+        return stoneMoves()
+    else:
+        return dameMoves()

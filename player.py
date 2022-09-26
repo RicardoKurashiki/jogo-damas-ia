@@ -9,6 +9,8 @@ from piece import Piece
 class Player:
     def __init__(self, team):
         self.team = Definitions().intToTeam[team]
+        self.capturing = False
+        self.logs = []
 
     def validateInput(self, playerInput):
         v1 = playerInput.isnumeric()
@@ -71,44 +73,61 @@ class Player:
 
     def possibleMoves(self, currentPos, table):
         def stoneMoves():
-            possibleEnemyMoves=[]
-            possibleFreeMoves=[]
-            currentLine = currentPos[0]
-            currentColumn = currentPos[1]
+            i = currentPos[0]
+            j = currentPos[1]
+            piece = Piece(table[i][j])
+            possibleFreeMoves = list() # Lista de movimentos possíveis de forma geral.
+            possibleEnemyMoves = list() # Lista de movimentos possíveis para caso tenha um inimigo.
             upDown = 0
             lastHouse = 0
+            canReverseEat = False
             
             if (piece.team == Team.WHITE):
                 upDown = 1
                 lastHouse = 9
+                canReverseEat = i > 1
             else:
                 upDown = -1
                 lastHouse = 0
-                
-            if (currentLine != lastHouse):
-                if (currentColumn > 0) and (Piece(table[currentLine+upDown][currentColumn-1]).team != piece.team):
-                    leftMove = [currentLine+ upDown, currentColumn - 1]
-                    leftMovePiece = Piece(table[leftMove[0]][leftMove[1]]) 
+                canReverseEat = i < 8
 
-                    if (leftMovePiece.team == enemy) and (leftMove[0] != lastHouse) and (leftMove[1] != 0) and (Piece(table[currentLine + 2*upDown][currentColumn - 2]).team == Team.BLANK):
-                        leftMove = [currentLine + 2*upDown, currentColumn - 2]
-                        possibleEnemyMoves.append(leftMove)
-                    elif leftMovePiece.team == Team.BLANK:
-                        possibleFreeMoves.append(leftMove)
+            # -------------- Verificacao de Possivel Jogada --------------
+            # Se for branca, e ja estiver na posicao 9, nao tem como "descer" mais.
+            # Se for preta, e ja estiver na posicao 0, nao tem como "subir" mais.
+            
+            if (canReverseEat == True) and (j > 1) and (Piece(table[i-upDown][j-1]).team == enemy) and (Piece(table[i - 2*upDown][j - 2]).team == Team.BLANK):
+                revMove = [i - 2*upDown, j - 2]
+                possibleEnemyMoves.append(revMove)
 
-                if (currentColumn < 9) and (Piece(table[currentLine+upDown][currentColumn+1]).team != piece.team):
-                    rightMove = [currentLine + upDown, currentColumn + 1]
-                    rightMovePiece = Piece(table[rightMove[0]][rightMove[1]])
+            if (canReverseEat == True) and (j < 8) and (Piece(table[i-upDown][j+1]).team == enemy) and (Piece(table[i - 2*upDown][j + 2]).team == Team.BLANK):
+                revMove = [i - 2*upDown, j + 2]
+                possibleEnemyMoves.append(revMove)
 
-                    if (rightMovePiece.team == enemy) and (rightMove[0] != lastHouse) and (rightMove[1] != 9) and (Piece(table[currentLine + 2*upDown][currentColumn + 2]).team == Team.BLANK):
-                        rightMove = [currentLine + 2*upDown, currentColumn + 2]
-                        possibleEnemyMoves.append(rightMove)
-                    elif rightMovePiece.team == Team.BLANK:
-                        possibleFreeMoves.append(rightMove)
+            if (i != lastHouse) and (j > 0) and (Piece(table[i+upDown][j-1]).team != piece.team):
+                leftMove = [i + upDown, j - 1]
+                leftMovePiece = Piece(table[leftMove[0]][leftMove[1]]) 
 
+                if (leftMovePiece.team == enemy) and (leftMove[0] != lastHouse) and (leftMove[1] != 0) and (Piece(table[i + 2*upDown][j - 2]).team == Team.BLANK):
+                    leftMove = [i + 2*upDown, j - 2]
+                    possibleEnemyMoves.append(leftMove)
+                elif leftMovePiece.team == Team.BLANK:
+                    possibleFreeMoves.append(leftMove)
+
+            if (i != lastHouse) and (j < 9) and (Piece(table[i+upDown][j+1]).team != piece.team):
+                rightMove = [i + upDown, j + 1]
+                rightMovePiece = Piece(table[rightMove[0]][rightMove[1]])
+
+                if (rightMovePiece.team == enemy) and (rightMove[0] != lastHouse) and (rightMove[1] != 9) and (Piece(table[i + 2*upDown][j + 2]).team == Team.BLANK):
+                    rightMove = [i + 2*upDown, j + 2]
+                    possibleEnemyMoves.append(rightMove)
+                elif rightMovePiece.team == Team.BLANK:
+                    possibleFreeMoves.append(rightMove)
+            
             if (len(possibleEnemyMoves) > 0):
+                self.capturing = True
                 return possibleEnemyMoves
             else:
+                self.capturing = False
                 return possibleFreeMoves
 
         def dameMoves():
@@ -197,8 +216,10 @@ class Player:
                     delta += 1
 
             if (len(possibleEnemyMoves) > 0):
+                self.capturing = True
                 return possibleEnemyMoves
             else:
+                self.capturing = False
                 return possibleFreeMoves
 
         piece = Piece(table[currentPos[0]][currentPos[1]])
@@ -216,10 +237,28 @@ class Player:
     def play(self, table):
         possibleMoves=[]
         currentPos=[0,0]
-        while (len(possibleMoves) == 0):
-            currentPos = self.getCurrentPos(table)
+        if (self.capturing):
+            currentPos = self.logs[-1].nextPos
             possibleMoves = self.possibleMoves(currentPos, table)
             if (len(possibleMoves) == 0):
                 print("Esta peça não possui movimentos válidos.")
+        else:
+            while (len(possibleMoves) == 0):
+                currentPos = self.getCurrentPos(table)
+                possibleMoves = self.possibleMoves(currentPos, table)
+                if (len(possibleMoves) == 0):
+                    print("Esta peça não possui movimentos válidos.")
         context = self.getNextPos(currentPos, possibleMoves, table)
+        self.possibleMoves(context.nextPos, table)
+        context.capturing = self.capturing
+        self.logs.append(context)
         return context
+
+
+
+
+
+
+
+
+

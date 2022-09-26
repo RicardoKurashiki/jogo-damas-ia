@@ -10,10 +10,11 @@ import math
 from piece import Piece
 
 class Context:
-    def __init__(self, currentPos, nextPos, piece):
+    def __init__(self, currentPos, nextPos, piece, capturing=False):
         self.currentPos = currentPos
         self.nextPos = nextPos
         self.piece = piece
+        self.capturing = capturing
     
     def getDistance(self):
         x = self.nextPos[1] - self.currentPos[1]
