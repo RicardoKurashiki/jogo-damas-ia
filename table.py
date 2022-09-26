@@ -22,6 +22,7 @@ from definitions import *
 from piece import Piece
 import copy
 
+
 class Table:
     def __init__(self, table=[], blacks=0, whites=0):
         self.table = copy.deepcopy(table)
@@ -40,18 +41,16 @@ class Table:
                 spaces = []
                 for j in range(10):
                     if (cont % 2 != 0):
-                        spaces.append([0,0])
+                        spaces.append([0, 0])
                     else:
                         spaces.append(type)
                     cont += 1
                 self.table.append(spaces)
                 cont -= 1
-        
-        # generatePieces([2,1], 4)
-        # generatePieces([0,0], 2)
-        # generatePieces([1,1], 4)
 
-        generatePieces([0,0], 10)
+        generatePieces([2, 1], 4)
+        generatePieces([0, 0], 2)
+        generatePieces([1, 1], 4)
 
     def showTable(self):
         for i in range(10):
@@ -72,20 +71,20 @@ class Table:
         self.whites = 20
         self.generateTable()
         self.showTable()
-        
+
     # =============================== #
 
     def move(self, context, show=False):
         def clearPlaces():
             for i in range(int(context.getDistance())):
                 if (context.getDirection() == "SE"):
-                    self.table[currentPos[0]+i][currentPos[1]+i] = [0,0]
+                    self.table[currentPos[0]+i][currentPos[1]+i] = [0, 0]
                 elif (context.getDirection() == "SW"):
-                    self.table[currentPos[0]+i][currentPos[1]-i] = [0,0]
+                    self.table[currentPos[0]+i][currentPos[1]-i] = [0, 0]
                 elif (context.getDirection() == "NE"):
-                    self.table[currentPos[0]-i][currentPos[1]+i] = [0,0]
+                    self.table[currentPos[0]-i][currentPos[1]+i] = [0, 0]
                 elif (context.getDirection() == "NW"):
-                    self.table[currentPos[0]-i][currentPos[1]-i] = [0,0]
+                    self.table[currentPos[0]-i][currentPos[1]-i] = [0, 0]
 
         hasCaptured = self.hasCaptured(context)
         currentPos = context.currentPos

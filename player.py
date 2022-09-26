@@ -7,6 +7,7 @@ from context import Context
 from piece import Piece
 from table import Table
 
+
 class Player:
     def __init__(self, team):
         self.team = Definitions().intToTeam[team]
@@ -14,10 +15,15 @@ class Player:
         self.logs = []
 
     def validateInput(self, playerInput):
+        if (playerInput == ''):
+            return False
         v1 = playerInput.isnumeric()
         if (not v1):
             print("Escolha inválida. Tente novamente.")
-        return v1
+        v2 = int(playerInput) >= 0 and int(playerInput) < 10
+        if (not v2):
+            print("Valor inválido. Tente novamente.")
+        return (v1 and v2)
 
     def validatePosByPiece(self, position, table):
         v1 = (Piece(table[position[0]][position[1]]).team == self.team)
@@ -26,7 +32,7 @@ class Player:
         return v1
 
     def getCurrentPos(self, table):
-        currentPos = [0,0]
+        currentPos = [0, 0]
         posValid = False
         while not posValid:
             lineValid = False
@@ -49,8 +55,8 @@ class Player:
             for m in possibleMoves:
                 print(f"[{m[0]}, {m[1]}]", end=" ")
             print()
-        
-        nextPos = [0,0]
+
+        nextPos = [0, 0]
         moveValid = False
         while not moveValid:
             showPossibleMoves()
@@ -64,7 +70,7 @@ class Player:
                 userColumn = input("Entre a próxima coluna: ")
                 columnValid = self.validateInput(userColumn)
 
-            nextPos = [int(userLine),int(userColumn)]
+            nextPos = [int(userLine), int(userColumn)]
             piece = Piece(table[currentPos[0]][currentPos[1]])
             context = Context(currentPos, nextPos, piece)
             moveValid = (nextPos in possibleMoves)
@@ -77,12 +83,14 @@ class Player:
             i = currentPos[0]
             j = currentPos[1]
             piece = Piece(table[i][j])
-            possibleFreeMoves = list() # Lista de movimentos possíveis de forma geral.
-            possibleEnemyMoves = list() # Lista de movimentos possíveis para caso tenha um inimigo.
+            # Lista de movimentos possíveis de forma geral.
+            possibleFreeMoves = list()
+            # Lista de movimentos possíveis para caso tenha um inimigo.
+            possibleEnemyMoves = list()
             upDown = 0
             lastHouse = 0
             canReverseEat = False
-            
+
             if (piece.team == Team.WHITE):
                 upDown = 1
                 lastHouse = 9
@@ -95,7 +103,7 @@ class Player:
             # -------------- Verificacao de Possivel Jogada --------------
             # Se for branca, e ja estiver na posicao 9, nao tem como "descer" mais.
             # Se for preta, e ja estiver na posicao 0, nao tem como "subir" mais.
-            
+
             if (canReverseEat == True) and (j > 1) and (Piece(table[i-upDown][j-1]).team == enemy) and (Piece(table[i - 2*upDown][j - 2]).team == Team.BLANK):
                 revMove = [i - 2*upDown, j - 2]
                 possibleEnemyMoves.append(revMove)
@@ -106,7 +114,7 @@ class Player:
 
             if (i != lastHouse) and (j > 0) and (Piece(table[i+upDown][j-1]).team != piece.team):
                 leftMove = [i + upDown, j - 1]
-                leftMovePiece = Piece(table[leftMove[0]][leftMove[1]]) 
+                leftMovePiece = Piece(table[leftMove[0]][leftMove[1]])
 
                 if (leftMovePiece.team == enemy) and (leftMove[0] != lastHouse) and (leftMove[1] != 0) and (Piece(table[i + 2*upDown][j - 2]).team == Team.BLANK):
                     leftMove = [i + 2*upDown, j - 2]
@@ -123,7 +131,7 @@ class Player:
                     possibleEnemyMoves.append(rightMove)
                 elif rightMovePiece.team == Team.BLANK:
                     possibleFreeMoves.append(rightMove)
-            
+
             if (len(possibleEnemyMoves) > 0):
                 self.capturing = True
                 return possibleEnemyMoves
@@ -135,10 +143,12 @@ class Player:
             currentLine = currentPos[0]
             currentColumn = currentPos[1]
             piece = Piece(table[currentLine][currentColumn])
-            possibleFreeMoves = list() # Lista de movimentos possíveis de forma geral.
-            possibleEnemyMoves = list() # Lista de movimentos possíveis para caso tenha um inimigo.
+            # Lista de movimentos possíveis de forma geral.
+            possibleFreeMoves = list()
+            # Lista de movimentos possíveis para caso tenha um inimigo.
+            possibleEnemyMoves = list()
             enemy = 0
-            
+
             if (piece.team == Team.WHITE):
                 enemy = Team.BLACK
             else:
@@ -146,14 +156,15 @@ class Player:
 
             # Movimento CIMA ESQUERDA
             if (currentLine > 0) and (currentColumn > 0):
-                delta = 1;
-                while ((currentLine - delta) > -1) and ((currentColumn - delta) >  -1):
+                delta = 1
+                while ((currentLine - delta) > -1) and ((currentColumn - delta) > -1):
                     upLeft = [currentLine - delta, currentColumn - delta]
                     upLeftPiece = Piece(table[upLeft[0]][upLeft[1]])
 
                     if (upLeftPiece.team == enemy) and (upLeft[0] != 0) and (upLeft[1] != 0):
                         if (Piece(table[currentLine - (delta+1)][currentColumn - (delta+1)]).team == Team.BLANK):
-                            upLeft = [currentLine - (delta+1), currentColumn - (delta+1)]
+                            upLeft = [currentLine -
+                                      (delta+1), currentColumn - (delta+1)]
                             possibleEnemyMoves.append(upLeft)
                         break
                     elif (upLeftPiece.team == Team.BLANK):
@@ -162,17 +173,18 @@ class Player:
                         break
 
                     delta += 1
-            
+
             # Movimento BAIXO DIREITA
             if (currentLine < 9) and (currentColumn < 9):
-                delta = 1;
+                delta = 1
                 while ((currentLine + delta) < 10) and ((currentColumn + delta) < 10):
                     downRight = [currentLine + delta, currentColumn + delta]
                     downRightPiece = Piece(table[downRight[0]][downRight[1]])
 
                     if ((downRightPiece.team == enemy) and (downRight[0] != 9) and (downRight[1] != 9)):
                         if Piece(table[currentLine + (delta+1)][currentColumn + (delta+1)]).team == Team.BLANK:
-                            downRight = [currentLine + (delta+1), currentColumn + (delta+1)]
+                            downRight = [currentLine +
+                                         (delta+1), currentColumn + (delta+1)]
                             possibleEnemyMoves.append(downRight)
                         break
                     elif (downRightPiece.team == Team.BLANK):
@@ -184,14 +196,15 @@ class Player:
 
             # Movimento CIMA DIREITA
             if (currentLine > 0) and (currentColumn < 9):
-                delta = 1;
+                delta = 1
                 while ((currentLine - delta) > -1) and ((currentColumn + delta) < 10):
                     upRight = [currentLine - delta, currentColumn + delta]
                     upRightPiece = Piece(table[upRight[0]][upRight[1]])
 
                     if (upRightPiece.team == enemy) and (upRight[0] != 0) and (upRight[1] != 9):
                         if (Piece(table[currentLine - (delta+1)][currentColumn + (delta+1)]).team == Team.BLANK):
-                            upRight = [currentLine - (delta+1), currentColumn + (delta+1)]
+                            upRight = [currentLine -
+                                       (delta+1), currentColumn + (delta+1)]
                             possibleEnemyMoves.append(upRight)
                         break
                     elif (upRightPiece.team == Team.BLANK):
@@ -200,17 +213,18 @@ class Player:
                         break
 
                     delta += 1
-            
+
             # Movimento BAIXO ESQUERDA
             if (currentLine < 9) and (currentColumn > 0):
-                delta = 1;
+                delta = 1
                 while ((currentLine + delta) < 10) and ((currentColumn - delta) != -1):
                     downLeft = [currentLine + delta, currentColumn - delta]
                     downLeftPiece = Piece(table[downLeft[0]][downLeft[1]])
 
                     if (downLeftPiece.team == enemy) and (downLeft[0] != 9) and (downLeft[1] != 0):
                         if (Piece(table[currentLine + (delta+1)][currentColumn - (delta+1)]).team == Team.BLANK):
-                            downLeft = [currentLine + (delta+1), currentColumn - (delta+1)]
+                            downLeft = [currentLine +
+                                        (delta+1), currentColumn - (delta+1)]
                             possibleEnemyMoves.append(downLeft)
                         break
                     elif (downLeftPiece.team == Team.BLANK):
@@ -241,8 +255,8 @@ class Player:
 
     def play(self, tableClass):
         table = tableClass.table
-        possibleMoves=[]
-        currentPos=[0,0]
+        possibleMoves = []
+        currentPos = [0, 0]
         if (len(self.logs) > 0 and self.logs[-1].capturing):
             currentPos = self.logs[-1].nextPos
             possibleMoves = self.possibleMoves(currentPos, table)
@@ -266,11 +280,3 @@ class Player:
         else:
             captured = False
             self.capturing = False
-
-
-
-
-
-
-
-
