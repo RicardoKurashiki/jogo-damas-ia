@@ -66,7 +66,7 @@ class AlphaBeta:
         if (cascade != None):
             move = self.playCascade(tableClass, cascade)
         else:
-            self.lastMove = self.minimax(tableClass, -inf, inf, 2, self.team)
+            self.lastMove = self.minimax(tableClass, -inf, inf, 6, self.team)
             move = self.lastMove.context
         
         if (type(move) is list):

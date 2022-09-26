@@ -5,6 +5,7 @@ Seguir o design de Factory, na main chamar apenas .play() --return-> Context()
 from definitions import *
 from context import Context
 from piece import Piece
+from table import Table
 
 class Player:
     def __init__(self, team):
@@ -231,13 +232,14 @@ class Player:
 
         if (piece.type == Type.PEDRA):
             return stoneMoves()
-        else:
+        elif (piece.type == Type.DAMA):
             return dameMoves()
 
-    def play(self, table):
+    def play(self, tableClass):
+        table = tableClass.table
         possibleMoves=[]
         currentPos=[0,0]
-        if (self.capturing):
+        if (len(self.logs) > 0 and self.logs[-1].capturing):
             currentPos = self.logs[-1].nextPos
             possibleMoves = self.possibleMoves(currentPos, table)
             if (len(possibleMoves) == 0):
@@ -249,11 +251,13 @@ class Player:
                 if (len(possibleMoves) == 0):
                     print("Esta peça não possui movimentos válidos.")
         context = self.getNextPos(currentPos, possibleMoves, table)
-        self.possibleMoves(context.nextPos, table)
-        context.capturing = self.capturing
+        tempTable = Table()
+        tempTable.copy(tableClass)
+        captured = tempTable.move(context, False)
+        self.possibleMoves(context.nextPos, tempTable.table)
+        context.capturing = captured and self.capturing
         self.logs.append(context)
         return context
-
 
 
 

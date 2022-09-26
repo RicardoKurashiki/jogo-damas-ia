@@ -43,7 +43,7 @@ controller = AlphaBeta(enemy)
 while game:
     table.showPoints()
     if (turn == player.team):
-        context = player.play(table.table)
+        context = player.play(table)
         table.move(context, True)
         if (not context.capturing):
             turn = enemy

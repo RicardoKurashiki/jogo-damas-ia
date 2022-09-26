@@ -48,8 +48,10 @@ class Table:
                 cont -= 1
         
         # generatePieces([2,1], 4)
-        generatePieces([0,0], 10)
+        # generatePieces([0,0], 2)
         # generatePieces([1,1], 4)
+        generatePieces([0,0], 10)
+
 
     def showTable(self):
         for i in range(10):
@@ -81,10 +83,11 @@ class Table:
                 elif (context.getDirection() == "SW"):
                     self.table[currentPos[0]+i][currentPos[1]-i] = [0,0]
                 elif (context.getDirection() == "NE"):
-                    self.table[currentPos[0]-+i][currentPos[1]+i] = [0,0]
+                    self.table[currentPos[0]-i][currentPos[1]+i] = [0,0]
                 elif (context.getDirection() == "NW"):
                     self.table[currentPos[0]-i][currentPos[1]-i] = [0,0]
 
+        hasCaptured = self.hasCaptured(context)
         currentPos = context.currentPos
         nextPos = context.nextPos
         clearPlaces()
@@ -101,6 +104,24 @@ class Table:
         if (show):
             self.showTable()
 
+        return hasCaptured
+
+    def hasCaptured(self, context):
+        enemy = Team.BLACK if context.piece.team == Team.WHITE else Team.WHITE
+        currentPos = context.currentPos
+        for i in range(int(context.getDistance())):
+            if (context.getDirection() == "SE"):
+                if (self.table[currentPos[0]+i][currentPos[1]+i][0] == enemy.value):
+                    return True
+            elif (context.getDirection() == "SW"):
+                if (self.table[currentPos[0]+i][currentPos[1]-i][0] == enemy.value):
+                    return True
+            elif (context.getDirection() == "NE"):
+                if (self.table[currentPos[0]-i][currentPos[1]+i][0] == enemy.value):
+                    return True
+            elif (context.getDirection() == "NW"):
+                if (self.table[currentPos[0]-i][currentPos[1]-i][0] == enemy.value):
+                    return True
 
     def updatePoints(self):
         b = 0
