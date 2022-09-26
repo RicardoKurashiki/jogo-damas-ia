@@ -1,4 +1,7 @@
 from math import inf
+from pydoc import doc
+from tkinter import E
+from typing import Counter
 from piece import Piece
 from definitions import *
 from context import Context
@@ -19,24 +22,28 @@ class PossibleMoves:
 class AlphaBeta:
     def __init__(self, team):
         self.team = team
+        self.lastEat = EvaluatedMove()
 
     def think(self, tableClass):
         print("Pensando...")
 
-        move = self.minimax(tableClass, -inf, inf, 6, self.team).context
+        self.lastEat = self.minimax(tableClass, -inf, inf, 2, self.team)
+        move = self.lastEat.context
         
         print(f"Máquina joga: {move.currentPos[0]},{move.currentPos[0]} >> {move.nextPos[0]},{move.nextPos[0]}")
 
         return move
 
-    def minimax(self, tableClass, alpha, beta, depth, team):
+    def minimax(self, tableClass, alpha, beta, depth, team, lockPiece = 0):
         currentEvaluation = EvaluatedMove()
         currentEvaluation.evaluation = getEvaluation(tableClass.table, self.team)
         enemyTeam = Team.WHITE if team == Team.BLACK else Team.BLACK
+        time.sleep(2)
 
         if (depth == 0) or (currentEvaluation == 0):
             return currentEvaluation
 
+        print(currentEvaluation.evaluation)
         if self.team == team:
             moveMaxEval = EvaluatedMove()
             moveMaxEval.context = Context([0,0],[0,0],Piece([0,0]))
@@ -45,14 +52,19 @@ class AlphaBeta:
             possibleMoves = getAvailableTeamMovements(tableClass.table, team)
             myTable = Table()
             
-            for move in possibleMoves:
+            for move in possibleMoves.movesBuffer:
+                # bonus = 1
+                # if (possibleMoves.hasEnemy == True):
+                #     if (move.currentPos == self.lastEat.context.nextPos):
+                #         bonus = 1.5
+
                 myTable.copy(tableClass)
-                myTable.move(move, False)
+                myTable.move(move, True)
 
                 moveEval = EvaluatedMove()
                 moveEval.context = move
                 moveEval.evaluation = self.minimax(myTable, alpha, beta, depth-1, enemyTeam).evaluation
-                
+
                 if (moveMaxEval.evaluation < moveEval.evaluation):
                     moveMaxEval = moveEval
 
@@ -69,15 +81,22 @@ class AlphaBeta:
             moveMinEval.evaluation = inf
 
             possibleMoves = getAvailableTeamMovements(tableClass.table, team)
+            
             myTable = Table()
 
-            for move in possibleMoves:
+            for move in possibleMoves.movesBuffer:
+                eatCounter = getEatCounter(tableClass, move)
+
                 myTable.copy(tableClass)
-                myTable.move(move, False)
+                myTable.move(move, True)
 
                 moveEval = EvaluatedMove()
                 moveEval.context = move
-                moveEval.evaluation = self.minimax(myTable, alpha, beta, depth-1, enemyTeam).evaluation
+
+                if (possibleMoves.hasEnemy == True) and eatCounter > 1:
+                    moveEval.evaluation = self.minimax(myTable, alpha, beta, depth-1, team, move).evaluation
+                else:
+                    moveEval.evaluation = self.minimax(myTable, alpha, beta, depth-1, enemyTeam).evaluation
 
                 if (moveMinEval.evaluation > moveEval.evaluation):
                     moveMinEval = moveEval
@@ -96,20 +115,40 @@ def getEvaluation(table, team):
     blackPieces = getPiecesNumber(table, Team.BLACK)
     whitePieces = getPiecesNumber(table, Team.WHITE)
 
-    if (team == Team.BLACK):
+    if (team == Team.BLACK) and whitePieces != 0:
         evaluation = (blackPieces/whitePieces)*1000
-    else:
+    elif blackPieces != 0:
         evaluation = (whitePieces/blackPieces)*1000
 
     return evaluation
 
+def getEatCounter(table, context):
+    counter = 0
+    
+    myTable = Table()
+    myTable.copy(table)
+
+    currentPosition = context.currentPos
+    availableMovements = getStoneAvailableMoves(currentPosition[0], currentPosition[1], myTable.table)
+
+    while (availableMovements.hasEnemy == True and len(availableMovements.movesBuffer) > 0):
+        counter += 1
+        context = Context(currentPosition, availableMovements.movesBuffer[0], context.piece)
+        myTable.move(context)
+        currentPosition = availableMovements.movesBuffer[0]
+        availableMovements = getStoneAvailableMoves(currentPosition[0], currentPosition[1], myTable.table)
+
+    return counter
 
 def getPiecesNumber(table, team):
     counter = 0
     for i in range(10):
         for j in range(10):
             if Piece(table[i][j]).team == team:
-                counter += 1
+                if Piece(table[i][j]).type == Type.DAMA:
+                    counter += 5
+                else:
+                    counter += 1
     return counter
 
 def getAvailableTeamMovements(table, team):
@@ -143,12 +182,11 @@ def getAvailableTeamMovements(table, team):
     if (len(possibleEnemyMoves) > 0):
         # for move in possibleEnemyMoves:
         #     print(f"{pieceTeam}[{move.currentPos[0]},{move.currentPos[1]}] >> [{move.nextPos[0]},{move.nextPos[1]}]")
-        return possibleEnemyMoves
+        return PossibleMoves(True, possibleEnemyMoves)
     else:
         # for move in possibleFreeMoves:
         #     print(f"{pieceTeam}[{move.currentPos[0]},{move.currentPos[1]}] >> [{move.nextPos[0]},{move.nextPos[1]}]")
-        return possibleFreeMoves
-
+        return PossibleMoves(False, possibleFreeMoves)
 
 def getStoneAvailableMoves(i, j, table):
     piece = Piece(table[i][j])
